@@ -75,5 +75,20 @@ immediately."
   "Reset VARIABLE to its initial value."
   (stash-set variable (get variable 'stash-default-value)))
 
+(defun stash-read (variable-or-file &optional default)
+  "Return value stashed for VARIABLE-OR-FILE.
+If VARIABLE-OR-FILE is a symbol, use its 'stash-file property.  If
+file doesn't exist, return DEFAULT."
+  (let ((file (expand-file-name (if (symbolp variable-or-file)
+                                    (get variable-or-file 'stash-file)
+                                  variable-or-file)
+                                stash-directory)))
+    (if (file-readable-p file)
+        (with-temp-buffer
+          (insert-file-contents file)
+          (goto-char (point-min))
+          (read (current-buffer)))
+      default)))
+
 (provide 'stash)
 ;;; stash.el ends here
