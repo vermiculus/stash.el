@@ -27,6 +27,9 @@
 ;; unnecessary blocks to execution.
 
 ;;; Code:
+(eval-when-compile
+  (require 'cl-lib))
+
 (defgroup stash nil
   "Customization group for stash."
   :prefix "stash-"
@@ -89,6 +92,44 @@ file doesn't exist, return DEFAULT."
           (goto-char (point-min))
           (read (current-buffer)))
       default)))
+
+
+;;;###autoload
+(cl-defmacro defstash (symbol default-value docstring
+                              &keys subdir filename (delay 5))
+  "Define SYMBOL as a stash variable, and return SYMBOL.
+Similar to `defvar' except the variable is also saved to disk in
+a file inside `stash-directory' (the stash).  DEFAULT-VALUE is
+only used if the stash didn't already exist.  If it did, the
+variable's initial value is taken from there.
+
+In order to ensure the stash is up-to-date, the variable's value
+should be changed with `stash-set' or `stash-setq' instead of
+`set' or `setq'.
+
+DOCSTRING is passed to `defvar'.
+
+In addition, this macro also takes the following keyword
+arguments:
+:subdir
+    a subdirectory, inside `stash-directory', in which to save
+    the stash.
+:filename
+    a name for the stash.  If this is absent, a sanitized version
+    of SYMBOL is used.
+:delay
+    the amount of idle time, in seconds, before the stash is
+    updated after the value has been changed (default 5)."
+  (declare (doc-string 3) (debug (name body)))
+  (let* ((actual-filename (or filename
+                              (url-hexify-string (symbol-name symbol))))
+         (file (concat (file-name-as-directory subdir)
+                       actual-filename))
+         (value (make-symbol "value")))
+    ;; TODO: Sanitize `value'.
+    `(let ((,value (stash-read ,file ,default-value)))
+       (defvar ,symbol ,value ,docstring)
+       (stash-new ',symbol ,file ,value ,delay))))
 
 (provide 'stash)
 ;;; stash.el ends here
