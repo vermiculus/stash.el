@@ -20,7 +20,10 @@
 
 ;;; Commentary:
 
-;; Lightweight, persistent caching of Lisp data
+;; stash.el provides lightweight, persistent caching of Lisp data.  It
+;; enables the programmer to create variables which will be written to
+;; disk after a certain amount of idle time, as to not cause
+;; unnecessary blocks to execution.
 
 ;;; Code:
 
