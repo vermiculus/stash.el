@@ -93,16 +93,18 @@ The filename is expanded within the context of
 (defsubst stash-write-delay (variable)
   (get variable 'stash-write-delay))
 
-(defun stash-read (file default &optional symbol-index)
+(defun stash-read (file default)
   "Return the data in FILE.
-If FILE is not readable, return DEFAULT.  If SYMBOL-INDEX is
-non-nil, return the symbol at that index (zero-based)."
+If FILE is not readable, return DEFAULT.
+
+Note: FILE is expected to contain the data structure as a single
+symbolic expression (sexp).  If there are many sexps in FILE,
+this function will only return the first.  This is of no concern
+if FILE was written by `stash-save'."
   (if (file-readable-p file)
       (with-temp-buffer
         (insert-file-contents file)
         (goto-char (point-min))
-        (when symbol-index
-          (forward-sexp symbol-index))
         (read (current-buffer)))
     default))
 
