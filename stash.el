@@ -50,10 +50,8 @@
    (get variable :file))
   (stash-get variable))
 
-(defun stash-clear (variable &optional with-file)
-  (set variable nil)
-  (when with-file
-    (delete-file (get variable :file))))
+(defun stash-reset (variable)
+  (stash-set variable (get variable :init-value)))
 
 (provide 'stash)
 ;;; stash.el ends here
