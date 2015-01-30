@@ -153,9 +153,10 @@ arguments:
   (let* ((actual-filename (or filename
                               (url-hexify-string
                                (symbol-name symbol))))
-         (file (expand-file-name actual-filename subdir)))
+         (file (expand-file-name actual-filename subdir))
+         (value (stash-read file default-value)))
     ;; @TODO: Sanitize `value'.
-    `(let ((,value (stash-read ,file ,default-value)))
+    `(progn
        (defvar ,symbol ,value ,docstring)
        (stash-new ',symbol ,file ,value ,delay))))
 
