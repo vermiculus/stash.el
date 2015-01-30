@@ -20,17 +20,25 @@
 
 ;;; Commentary:
 
-;; Lightweight, persistent caching of lisp data
+;; Lightweight, persistent caching of Lisp data
 
 ;;; Code:
 
 (defun stash-new (variable file &optional init-value write-delay)
+  "Define VARIABLE as a new stash to be written to FILE.
+
+VARIABLE's default value will be INIT-VALUE.  When set, it will
+automatically be written to disk after Emacs is idle WRITE-DELAY
+seconds."
   (put variable :file file)
   (put variable :init-value init-value)
   (put variable :write-delay write-delay)
   (stash-set variable init-value))
 
 (defun stash-set (variable value &optional immediate-write)
+  "Set VARIABLE to VALUE.
+If IMMEDIATE-WRITE is non-nil, VARIABLE's data is written to disk
+immediately."
   (set variable value)
   (let ((delay (get variable :write-delay)))
     (if (and delay (not immediate-write))
@@ -43,6 +51,7 @@
   (symbol-name variable))
 
 (defun stash-save (variable)
+  "Write VARIABLE's data to disk."
   (write-region
    (let (print-length print-level)
      (prin1-to-string (stash-get variable)))
@@ -51,6 +60,7 @@
   (stash-get variable))
 
 (defun stash-reset (variable)
+  "Reset VARIABLE to its initial value."
   (stash-set variable (get variable :init-value)))
 
 (provide 'stash)
