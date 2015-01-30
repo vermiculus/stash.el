@@ -49,7 +49,7 @@ immediately."
       (stash-save variable)))
   (stash-get variable))
 
-(defun stash-get (variable)
+(defsubst stash-get (variable)
   "Return VARIABLE's data."
   (symbol-value variable))
 
