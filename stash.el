@@ -25,21 +25,23 @@
 ;;; Code:
 
 (defun stash-new (variable file &optional init-value)
-  (stash-set variable init-value)
   (put variable :file file)
   (put variable :init-value init-value)
-  (symbol-value variable))
+  (stash-set variable init-value))
 
 (defun stash-set (variable value)
   (set variable value))
+(defun stash-get (variable)
+  "Return VARIABLE's data."
+  (symbol-name variable))
 
 (defun stash-save (variable)
   (write-region
    (let (print-length print-level)
-     (prin1-to-string (symbol-value variable)))
+     (prin1-to-string (stash-get variable)))
    nil
    (get variable :file))
-  (symbol-value variable))
+  (stash-get variable))
 
 (defun stash-clear (variable &optional with-file)
   (set variable nil)
