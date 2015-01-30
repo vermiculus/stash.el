@@ -61,7 +61,7 @@ immediately."
       (stash-save variable)))
   (stash-get variable))
 
-(cl-defmacro stash-setq (variable value &key immediate-write)
+(defmacro stash-setq (variable value &optional immediate-write)
   `(stash-set ',variable ,value ,immediate-write))
 
 (defsubst stash-get (variable)
