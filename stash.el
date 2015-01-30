@@ -153,8 +153,7 @@ arguments:
   (let* ((actual-filename (or filename
                               (url-hexify-string
                                (symbol-name symbol))))
-         (file (expand-file-name actual-filename subdir))
-         (value (make-symbol "value")))
+         (file (expand-file-name actual-filename subdir)))
     ;; @TODO: Sanitize `value'.
     `(let ((,value (stash-read ,file ,default-value)))
        (defvar ,symbol ,value ,docstring)
