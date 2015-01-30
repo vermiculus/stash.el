@@ -30,6 +30,7 @@
 
 ;;; Code:
 (eval-when-compile
+  (package-initialize)
   (require 'cl-lib))
 
 (defgroup stash nil
