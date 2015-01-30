@@ -42,9 +42,9 @@
 VARIABLE's default value will be DEFAULT-VALUE.  When set, it
 will automatically be written to disk after Emacs is idle for
 WRITE-DELAY seconds."
-  (put variable :file file)
-  (put variable :default-value default-value)
-  (put variable :write-delay write-delay)
+  (put variable 'stash-file file)
+  (put variable 'stash-default-value default-value)
+  (put variable 'stash-write-delay write-delay)
   (stash-set variable default-value))
 
 (defun stash-set (variable value &optional immediate-write)
@@ -52,7 +52,7 @@ WRITE-DELAY seconds."
 If IMMEDIATE-WRITE is non-nil, VARIABLE's data is written to disk
 immediately."
   (set variable value)
-  (let ((delay (get variable :write-delay)))
+  (let ((delay (get variable 'stash-write-delay)))
     (if (and delay (not immediate-write))
         (run-with-idle-timer delay nil #'stash-save variable)
       (stash-save variable)))
@@ -68,12 +68,12 @@ immediately."
    (let (print-length print-level)
      (prin1-to-string (stash-get variable)))
    nil
-   (expand-file-name (get variable :file)) stash-directory)
+   (expand-file-name (get variable 'stash-file)) stash-directory)
   (stash-get variable))
 
 (defun stash-reset (variable)
   "Reset VARIABLE to its initial value."
-  (stash-set variable (get variable :default-value)))
+  (stash-set variable (get variable 'stash-default-value)))
 
 (provide 'stash)
 ;;; stash.el ends here
