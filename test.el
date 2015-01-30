@@ -56,8 +56,3 @@
      (should-not (file-exists-p dir))
      (sleep-for 4)
      (should (file-exists-p dir)))))
-
-(cachey-put 'tmp:cache 123)
-
-(cachey-defstore 'tmp:store "store.el")
-
