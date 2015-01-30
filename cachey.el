@@ -165,6 +165,7 @@ is written to disk."
       (cachey-write repo))
     value))
 
+(add-hook 'kill-emacs-hook #'cachey-write-all)
 (defun cachey-write-all ()
   "Write all repos with `cachey-write'."
   (maphash (lambda (repo _file)
