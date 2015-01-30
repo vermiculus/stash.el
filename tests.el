@@ -1,13 +1,15 @@
+(package-initialize)
+
 (require 'ert)
 (require 'ert-x)
-
-(require 'stash "stash.el")
+(require 'cl-lib)
+(require 'stash)
 
 (defmacro with-clean-cache (&rest body)
-  `(let ((default-directory (expand-file-name "./.test-caches")))
-     (when (file-exists-p default-directory)
-       (delete-directory default-directory t))
-     (mkdir default-directory)
+  `(let ((stash-directory (expand-file-name "./.test-caches")))
+     (when (file-exists-p stash-directory)
+       (delete-directory stash-directory t))
+     (mkdir stash-directory)
      ,@body))
 
 (ert-deftest simple ()
@@ -17,7 +19,7 @@
            (stash-new 'tmp "tmp.el" 'my-default)))
 
    (should
-    (file-exists-p (get 'tmp :file)))
+    (file-exists-p (stash-file 'tmp)))
 
    (should
     (equal 123
@@ -42,9 +44,9 @@
            (stash-new 'tmp "tmp.el" 'my-default 1)))
 
    (should-not
-    (file-exists-p "tmp.el"))
+    (file-exists-p (stash-file 'tmp)))
 
    (ert-run-idle-timers)
 
    (should
-    (file-exists-p "tmp.el"))))
+    (file-exists-p (stash-file 'tmp)))))
