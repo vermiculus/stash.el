@@ -1,0 +1,8 @@
+#+Title: Leightweight, Persistent Caching in Elisp
+
+[[https://travis-ci.org/vermiculus/stash.el][https://travis-ci.org/vermiculus/stash.el.svg?branch=master]]
+
+=stash.el= provides lightweight, persistent caching of Lisp data.  It
+enables the programmer to create variables which will be written to
+disk after a certain amount of idle time, as to not cause unnecessary
+blocks to execution.
