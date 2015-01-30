@@ -34,3 +34,17 @@
    (should
     (equal 'my-default
            (stash-get 'tmp)))))
+
+(ert-deftest simple-with-idle-timer ()
+  (with-clean-cache
+   (should
+    (equal 'my-default
+           (stash-new 'tmp "tmp.el" 'my-default 1)))
+
+   (should-not
+    (file-exists-p "tmp.el"))
+
+   (ert-run-idle-timers)
+
+   (should
+    (file-exists-p "tmp.el"))))
