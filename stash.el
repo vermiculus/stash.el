@@ -55,7 +55,7 @@ WRITE-DELAY seconds."
 If IMMEDIATE-WRITE is non-nil, VARIABLE's data is written to disk
 immediately."
   (set variable value)
-  (let ((delay (get variable 'stash-write-delay)))
+  (let ((delay (stash-write-delay variable)))
     (if (and delay (not immediate-write))
         (run-with-idle-timer delay nil #'stash-save variable)
       (stash-save variable)))
@@ -77,22 +77,38 @@ immediately."
 (defsubst stash-file (variable)
   (get variable 'stash-file))
 
+(defsubst stash-default-value (variable)
+  (get variable 'stash-default-value))
+
+(defsubst stash-write-delay (variable)
+  (get variable 'stash-write-delay))
+
+(defun stash-read (file default &optional symbol-index)
+  "Return the data in FILE.
+If FILE is not readable, return DEFAULT.  If SYMBOL-INDEX is
+non-nil, return the symbol at that index (zero-based)."
+  (if (file-readable-p file)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (goto-char (point-min))
+        (when symbol-index
+          (forward-sexp symbol-index))
+        (read (current-buffer)))
+    default))
+
 (defun stash-load (variable)
   "Read and set VARIABLE from disk.
 If the associated file does not exist, the value of VARIABLE is
 reset."
-  (let ((file (stash-file variable)))
-    (if (file-exists-p file)
-        (stash-set
-         variable
-         (with-temp-buffer
-           (insert-file-contents file)
-           (read (buffer-string))))
-      (stash-reset variable))))
+  (stash-set
+   variable
+   (stash-read
+    (stash-file variable)
+    (stash-default-value variable))))
 
 (defun stash-reset (variable)
   "Reset VARIABLE to its initial value."
-  (stash-set variable (get variable 'stash-default-value)))
+  (stash-set variable (stash-default-value variable)))
 
 
 ;;;###autoload
