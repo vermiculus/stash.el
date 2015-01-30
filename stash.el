@@ -24,13 +24,20 @@
 
 ;;; Code:
 
-(defun stash-new (variable file &optional init-value)
+(defun stash-new (variable file &optional init-value write-delay)
   (put variable :file file)
   (put variable :init-value init-value)
+  (put variable :write-delay write-delay)
   (stash-set variable init-value))
 
-(defun stash-set (variable value)
-  (set variable value))
+(defun stash-set (variable value &optional immediate-write)
+  (set variable value)
+  (let ((delay (get variable :write-delay)))
+    (if (and delay (not immediate-write))
+        (run-with-idle-timer delay nil #'stash-save variable)
+      (stash-save variable)))
+  (stash-get variable))
+
 (defun stash-get (variable)
   "Return VARIABLE's data."
   (symbol-name variable))
