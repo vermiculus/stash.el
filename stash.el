@@ -36,7 +36,7 @@
   :group emacs)
 
 (defcustom stash-directory (locate-user-emacs-file "stash")
-  "Directory where stash variable files are saved."
+  "Directory where stash variable files are saved by default."
   :type 'directory
   :group 'stash)
 
@@ -78,7 +78,12 @@ immediately."
   (stash-get variable))
 
 (defsubst stash-file (variable)
-  (get variable 'stash-file))
+  "Return VARIABLE's associated file.
+The filename is expanded within the context of
+`stash-directory'."
+  (expand-file-name
+   (get variable 'stash-file)
+   stash-directory))
 
 (defsubst stash-default-value (variable)
   (get variable 'stash-default-value))
@@ -117,7 +122,7 @@ reset."
 ;;;###autoload
 (cl-defmacro defstash (symbol default-value docstring
                               &key subdir filename (delay 5))
-  "Define SYMBOL as a stash variable, and return SYMBOL.
+  "Define SYMBOL as a stash variable and return SYMBOL.
 Similar to `defvar' except the variable is also saved to disk in
 a file inside `stash-directory' (the stash).  DEFAULT-VALUE is
 only used if the stash didn't already exist.  If it did, the
