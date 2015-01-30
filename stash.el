@@ -59,8 +59,11 @@ immediately."
    (let (print-length print-level)
      (prin1-to-string (stash-get variable)))
    nil
-   (get variable :file))
+   (stash-file variable))
   (stash-get variable))
+
+(defsubst stash-file (variable)
+  (get variable :file))
 
 (defun stash-reset (variable)
   "Reset VARIABLE to its initial value."
