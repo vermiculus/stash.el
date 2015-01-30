@@ -65,6 +65,19 @@ immediately."
 (defsubst stash-file (variable)
   (get variable :file))
 
+(defun stash-load (variable)
+  "Read and set VARIABLE from disk.
+If the associated file does not exist, the value of VARIABLE is
+reset."
+  (let ((file (stash-file variable)))
+    (if (file-exists-p file)
+        (stash-set
+         variable
+         (with-temp-buffer
+           (insert-file-contents file)
+           (read (buffer-string))))
+      (stash-reset variable))))
+
 (defun stash-reset (variable)
   "Reset VARIABLE to its initial value."
   (stash-set variable (get variable :default-value)))
