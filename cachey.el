@@ -20,26 +20,30 @@
 
 ;;; Commentary:
 
-;; Cachey is implemented in terms of `caches' and `stores'.  A `cache'
-;; is a particular piece of data stored optionally by a key or its
-;; hash.  A `store' is a collection of these caches in a file.
+;; Like `pcache', Cachey is implemented in terms of `caches' and
+;; `repos'.  A `cache' is a particular piece of data stored
+;; optionally by a key or its hash.  A `repo' is a collection of
+;; these caches in a file.
 ;;
 ;; Any single cache can expire after a set amount of time, at which
-;; point a signal is raised to the calling function.  Stores can be
+;; point a signal is raised to the calling function.  Repos can be
 ;; written to disk continuously or on a timer.
 
 ;;; Code:
 
-(defvar cachey--cache-store-map   (make-hash-table))
+(defvar cachey--cache-repo-map   (make-hash-table))
 (defvar cachey--cache-timeout-map (make-hash-table))
 (defvar cachey--cache-updated-map (make-hash-table))
-(defvar cachey--store-file-map    (make-hash-table))
-(defvar cachey--store-async-map   (make-hash-table))
-(defvar cachey--store-data-map    (make-hash-table))
-(defvar cachey--store-changed-map (make-hash-table))
+(defvar cachey--repo-file-map    (make-hash-table))
+(defvar cachey--repo-async-map   (make-hash-table))
+(defvar cachey--repo-data-map    (make-hash-table))
+(defvar cachey--repo-changed-map (make-hash-table))
 (defcustom cachey-directory
   (locate-user-emacs-file "caches")
-  "Directory in which to save stores.")
+  "Directory in which to save repos.")
+
+(defun cachey-message (msg &rest args)
+  (apply #'message (concat "[cachey]: " msg) args))
 
 (defun cachey--read-file (file)
   "Read a file as Lisp data."
@@ -47,40 +51,40 @@
     (insert-file-contents file)
     (read (buffer-string))))
 
-(defun cachey-defcache (store cache &optional timeout initial-value)
-  "Define under STORE a CACHE.
+(defun cachey-defcache (repo cache &optional timeout initial-value)
+  "Define under REPO a CACHE.
 TIMEOUT is either nil or the number of seconds after which this
 initial-value expires.  If INITIAL-VALUE non-nil, CACHE is set by
 `cachey-put'.  Otherwise, the initial value of CACHE is nil."
-  (let ((store-data (gethash store cachey--store-data-map
-                             'cachey--store-not-found)))
-    (if (eq store-data 'cachey--store-not-found)
-        (error "Store `%S' is not defined" store)
-      (puthash cache store
-               cachey--cache-store-map)
+  (let ((repo-data (gethash repo cachey--repo-data-map
+                             'cachey--repo-not-found)))
+    (if (eq repo-data 'cachey--repo-not-found)
+        (error "Repo `%S' is not defined" repo)
+      (puthash cache repo
+               cachey--cache-repo-map)
       (puthash cache (if timeout (seconds-to-time timeout))
                cachey--cache-timeout-map)
       (cachey-put cache initial-value)
       cache)))
 
-(defun cachey-defstore (store file &optional write-delay read)
-  "Define a STORE with associated FILE.
+(defun cachey-defrepo (repo file &optional write-delay read)
+  "Define a REPO with associated FILE.
 WRITE-DELAY is either nil or the number of seconds after which
-STORE is written to disk at FILE.  \(This is done with
-`run-with-idle-timer'.)  If READ is non-nil, the store is read
+REPO is written to disk at FILE.  \(This is done with
+`run-with-idle-timer'.)  If READ is non-nil, the repo is read
 from FILE instead of created anew."
-  (puthash store file
-           cachey--store-file-map)
-  (puthash store (if read (cachey--read-file file)
+  (puthash repo (expand-file-name file cachey-directory)
+           cachey--repo-file-map)
+  (puthash repo (if read (cachey--read-file file)
                    (make-hash-table))
-           cachey--store-data-map)
-  (puthash store write-delay
-           cachey--store-async-map)
+           cachey--repo-data-map)
+  (puthash repo write-delay
+           cachey--repo-async-map)
   (when write-delay
     (run-with-idle-timer
      write-delay t
-     #'cachey-write store))
-  store)
+     #'cachey-write repo))
+  repo)
 
 (defun cachey--get-cache-timeout (cache)
   (gethash cache cachey--cache-timeout-map))
@@ -88,14 +92,14 @@ from FILE instead of created anew."
 (defun cachey--get-cache-updated (cache)
   (gethash cache cachey--cache-updated-map))
 
-(defun cachey--get-cache-store (cache)
-  (gethash cache cachey--cache-store-map))
+(defun cachey--get-cache-repo (cache)
+  (gethash cache cachey--cache-repo-map))
 
-(defun cachey--store-changed-p (store)
-  (gethash store cachey--store-changed-map))
+(defun cachey--repo-changed-p (repo)
+  (gethash repo cachey--repo-changed-map))
 
-(defun cachey--store-get-file (store)
-  (gethash store cachey--store-file-map))
+(defun cachey--repo-get-file (repo)
+  (gethash repo cachey--repo-file-map))
 
 (defun cachey-cache-expired-p (cache)
   "Return non-nil if CACHE has expired."
@@ -108,52 +112,53 @@ from FILE instead of created anew."
 
 (defun cachey-get (cache)
   "Return the value of CACHE."
-  (let ((store (gethash cache cachey--cache-store-map
+  (let ((repo (gethash cache cachey--cache-repo-map
                         'cachey--cache-not-found)))
-    (if (eq store 'cachey--cache-not-found)
-        (signal store cache)
-      (let ((data (gethash store cachey--store-data-map
-                           'cachey--store-not-found)))
-        (if (eq data 'cachey--store-not-found)
-            (signal data store)
-          (let ((value (gethash cache data 'cache-not-in-store)))
-            (if (eq value 'cache-not-in-store)
-                (signal value cache)
+    (if (eq repo 'cachey--cache-not-found)
+        (signal 'cachey-cache-not-found-error cache)
+      (let ((data (gethash repo cachey--repo-data-map
+                           'cachey--repo-not-found)))
+        (if (eq data 'cachey--repo-not-found)
+            (signal 'cachey-repo-not-found-error repo)
+          (let ((value (gethash cache data
+                                'cachey--cache-not-in-repo)))
+            (if (eq value 'cachey--cache-not-in-repo)
+                (signal 'cachey-cache-not-in-repo-error cache)
               (if (cachey-cache-expired-p cache)
-                  (signal 'cache-expired cache)
+                  (signal 'cachey-cache-expired-error cache)
                 value))))))))
 
 (defun cachey-put (cache value)
   "Update CACHE to VALUE.
-If CACHE's associcated store does not write on a delay, the store
+If CACHE's associcated repo does not write on a delay, the repo
 is written to disk."
-  (let* ((store (gethash cache cachey--cache-store-map))
-         (data (gethash store cachey--store-data-map)))
+  (let* ((repo (gethash cache cachey--cache-repo-map))
+         (data (gethash repo cachey--repo-data-map)))
     (puthash cache value data)
     (puthash cache (current-time) cachey--cache-updated-map)
-    (puthash store t cachey--store-changed-map)
-    (when (not (gethash store cachey--store-async-map))
-      (cachey-write store))
+    (puthash repo t cachey--repo-changed-map)
+    (when (not (gethash repo cachey--repo-async-map))
+      (cachey-write repo))
     value))
 
 (defun cachey-write-all ()
-  "Write all stores with `cachey-write'."
-  (maphash (lambda (store _file)
-             (cachey-write store))
-           cachey--store-file-map))
+  "Write all repos with `cachey-write'."
+  (maphash (lambda (repo _file)
+             (cachey-write repo))
+           cachey--repo-file-map))
 
-(defun cachey-write (store)
-  "Write STORE to disk if its data has changed."
-  (when (cachey--store-changed-p store)
-    (let ((file (cachey--store-get-file store))
+(defun cachey-write (repo)
+  "Write REPO to disk if its data has changed."
+  (when (cachey--repo-changed-p repo)
+    (let ((file (cachey--repo-get-file repo))
           print-length
           print-level)
       (mkdir cachey-directory)
       (write-region
-       (prin1-to-string (gethash store cachey--store-data-map)) nil
-       (expand-file-name (cachey--store-get-file store) cachey-directory))
-      (message "Wrote store `%S' to %S" store file)
-      (puthash store nil cachey--store-changed-map))))
+       (prin1-to-string (gethash repo cachey--repo-data-map)) nil
+       (cachey--repo-get-file repo))
+      (cachey-message "Wrote repo `%S' to %S" repo file)
+      (puthash repo nil cachey--repo-changed-map))))
 
 (provide 'cachey)
 ;;; cachey.el ends here
