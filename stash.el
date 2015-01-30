@@ -24,16 +24,16 @@
 
 ;;; Code:
 
-(defun stash-new (variable file &optional init-value write-delay)
+(defun stash-new (variable file &optional default-value write-delay)
   "Define VARIABLE as a new stash to be written to FILE.
 
-VARIABLE's default value will be INIT-VALUE.  When set, it will
-automatically be written to disk after Emacs is idle WRITE-DELAY
-seconds."
+VARIABLE's default value will be DEFAULT-VALUE.  When set, it
+will automatically be written to disk after Emacs is idle
+WRITE-DELAY seconds."
   (put variable :file file)
-  (put variable :init-value init-value)
+  (put variable :default-value default-value)
   (put variable :write-delay write-delay)
-  (stash-set variable init-value))
+  (stash-set variable default-value))
 
 (defun stash-set (variable value &optional immediate-write)
   "Set VARIABLE to VALUE.
@@ -61,7 +61,7 @@ immediately."
 
 (defun stash-reset (variable)
   "Reset VARIABLE to its initial value."
-  (stash-set variable (get variable :init-value)))
+  (stash-set variable (get variable :default-value)))
 
 (provide 'stash)
 ;;; stash.el ends here
