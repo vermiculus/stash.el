@@ -1,4 +1,4 @@
-#+Title: Leightweight, Persistent Caching in Elisp
+#+Title: Lightweight, Persistent Caching for Elisp
 
 [[https://travis-ci.org/vermiculus/stash.el][https://travis-ci.org/vermiculus/stash.el.svg?branch=master]]
 
