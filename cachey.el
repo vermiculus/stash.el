@@ -177,7 +177,7 @@ is written to disk."
     (let ((file (cachey--repo-get-file repo))
           print-length
           print-level)
-      (mkdir cachey-directory)
+      (ignore-errors (mkdir cachey-directory))
       (write-region
        (prin1-to-string (gethash repo cachey--repo-data-map)) nil
        (cachey--repo-get-file repo))
