@@ -45,6 +45,30 @@
 (defun cachey-message (msg &rest args)
   (apply #'message (concat "[cachey]: " msg) args))
 
+(define-error
+  'cachey-error
+  "Cache error")
+
+(define-error
+  'cachey-repo-not-found-error
+  "Cannot find repo"
+  'cachey-error)
+
+(define-error
+  'cachey-cache-not-found-error
+  "Cannot find cache's repo"
+  'cachey-error)
+
+(define-error
+  'cachey-cache-not-in-repo-error
+  "Cannot find cache in its repo"
+  'cachey-error)
+
+(define-error
+  'cachey-cache-expired-error
+  "Cache has expired"
+  'cachey-error)
+
 (defun cachey--read-file (file)
   "Read a file as Lisp data."
   (with-temp-buffer
