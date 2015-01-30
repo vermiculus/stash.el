@@ -1,4 +1,4 @@
-;;; stash.el --- lightweight persistent caching      -*- lexical-binding: t; -*-
+;;; stash.el --- lightweight persistent caching
 
 ;; Copyright (C) 2015  Sean Allred
 
