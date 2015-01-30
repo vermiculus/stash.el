@@ -47,7 +47,7 @@ immediately."
 
 (defun stash-get (variable)
   "Return VARIABLE's data."
-  (symbol-name variable))
+  (symbol-value variable))
 
 (defun stash-save (variable)
   "Write VARIABLE's data to disk."
