@@ -27,6 +27,15 @@
 ;; unnecessary blocks to execution.
 
 ;;; Code:
+(defgroup stash nil
+  "Customization group for stash."
+  :prefix "stash-"
+  :group emacs)
+
+(defcustom stash-directory (locate-user-emacs-file "stash")
+  "Directory where stash variable files are saved."
+  :type 'directory
+  :group 'stash)
 
 (defun stash-new (variable file &optional default-value write-delay)
   "Define VARIABLE as a new stash to be written to FILE.
@@ -59,7 +68,7 @@ immediately."
    (let (print-length print-level)
      (prin1-to-string (stash-get variable)))
    nil
-   (get variable :file))
+   (expand-file-name (get variable :file)) stash-directory)
   (stash-get variable))
 
 (defun stash-reset (variable)
