@@ -15,15 +15,22 @@
    (should
     (equal 'my-default
            (stash-new 'tmp "tmp.el" 'my-default)))
+
    (should
     (file-exists-p (get 'tmp :file)))
+
    (should
     (equal 123
            (stash-set 'tmp 123)))
+
    (should
     (equal 123
            (stash-get 'tmp)))
-   (stash-reset 'tmp)
+
+   (should
+    (equal 'my-default
+           (stash-reset 'tmp)))
+
    (should
     (equal 'my-default
            (stash-get 'tmp)))))
