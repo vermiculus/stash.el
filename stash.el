@@ -26,7 +26,6 @@
 
 (defun stash-new (variable file &optional default-value write-delay)
   "Define VARIABLE as a new stash to be written to FILE.
-
 VARIABLE's default value will be DEFAULT-VALUE.  When set, it
 will automatically be written to disk after Emacs is idle for
 WRITE-DELAY seconds."
