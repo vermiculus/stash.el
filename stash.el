@@ -35,7 +35,7 @@
 (defgroup stash nil
   "Customization group for stash."
   :prefix "stash-"
-  :group emacs)
+  :group 'emacs)
 
 (defcustom stash-directory (locate-user-emacs-file "stash")
   "Directory where stash variable files are saved by default."
