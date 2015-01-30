@@ -61,6 +61,9 @@ immediately."
       (stash-save variable)))
   (stash-get variable))
 
+(cl-defmacro stash-setq (variable value &key immediate-write)
+  `(stash-set ',variable ,value ,immediate-write))
+
 (defsubst stash-get (variable)
   "Return VARIABLE's data."
   (symbol-value variable))
@@ -139,7 +142,8 @@ arguments:
     updated after the value has been changed (default 5)."
   (declare (doc-string 3) (debug (name body)))
   (let* ((actual-filename (or filename
-                              (url-hexify-string (symbol-name symbol))))
+                              (url-hexify-string
+                               (symbol-name symbol))))
          (file (concat (file-name-as-directory subdir)
                        actual-filename))
          (value (make-symbol "value")))
