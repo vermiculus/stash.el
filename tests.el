@@ -1,8 +1,5 @@
-(package-initialize)
-
 (require 'ert)
 (require 'ert-x)
-(require 'cl-lib)
 (require 'stash)
 
 (defmacro with-clean-cache (&rest body)
