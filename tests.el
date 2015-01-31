@@ -9,7 +9,6 @@
      (mkdir stash-directory)
      ,@body))
 
-(stash-app-new nil 60)
 (stash-app-new test-app 60)
 
 (ert-deftest simple ()
