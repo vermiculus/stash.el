@@ -7,7 +7,7 @@ $(VERSIONS) :: clean
 	evm use emacs-24.$@-bin
 	emacs --version
 	cask install
-	emacs --batch -L . -l ert -l tests.el -f ert-run-tests-batch-and-exit
+	cask exec emacs --batch -L . -l ert -l tests.el -f ert-run-tests-batch-and-exit
 
 clean:
 	cask clean-elc
