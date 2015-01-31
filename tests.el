@@ -9,36 +9,33 @@
      (mkdir stash-directory)
      ,@body))
 
+(stash-app-new nil 60)
+(stash-app-new test-app 60)
+
 (ert-deftest simple ()
   (with-clean-cache
+
    (should
-    (equal 'my-default
-           (stash-new 'tmp "tmp.el" 'my-default)))
+    (eq 'tmp
+        (stash-new tmp "tmp.el")))
+
+   (ert-run-idle-timers)
 
    (should
     (file-exists-p (stash-file 'tmp)))
 
-   (should
-    (equal 123
-           (stash-set 'tmp 123)))
+   (setq tmp 123)
 
    (should
-    (equal 123
-           (stash-get 'tmp)))
+    (null (stash-reset 'tmp)))
 
    (should
-    (equal 'my-default
-           (stash-reset 'tmp)))
-
-   (should
-    (equal 'my-default
-           (stash-get 'tmp)))))
+    (null tmp))))
 
 (ert-deftest simple-with-idle-timer ()
   (with-clean-cache
-   (should
-    (equal 'my-default
-           (stash-new 'tmp "tmp.el" 'my-default 1)))
+
+   (stash-new tmp "tmp.el" test-app 'my-default)
 
    (should-not
     (file-exists-p (stash-file 'tmp)))

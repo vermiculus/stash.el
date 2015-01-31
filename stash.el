@@ -28,56 +28,50 @@
 ;; disk after a certain amount of idle time, as to not cause
 ;; unnecessary blocks to execution.
 
+;; The basic unit of stash.el is the app.  Apps define groups of
+;; related variables.  At an interval defined by each application, its
+;; variables are written to disk.  Where no app is given, the `nil'
+;; app is set to save every minute.
+
 ;;; Code:
 (eval-when-compile
   (require 'cl-lib))
+
+
+;;; User Customizations
 
 (defgroup stash nil
   "Customization group for stash."
   :prefix "stash-"
   :group 'emacs)
 
-(defcustom stash-directory (locate-user-emacs-file "stash")
+(defcustom stash-directory
+  (file-name-as-directory
+   (locate-user-emacs-file "stashes"))
   "Directory where stash variable files are saved by default."
   :type 'directory
   :group 'stash)
 
-(defun stash-new (variable file &optional default-value write-delay)
-  "Define VARIABLE as a new stash to be written to FILE.
-VARIABLE's default value will be DEFAULT-VALUE.  When set, it
-will automatically be written to disk after Emacs is idle for
-WRITE-DELAY seconds."
-  (put variable 'stash-file file)
-  (put variable 'stash-default-value default-value)
-  (put variable 'stash-write-delay write-delay)
-  (stash-set variable default-value))
+
+;;; Internal Variables
 
-(defun stash-set (variable value &optional immediate-write)
-  "Set VARIABLE to VALUE.
-If IMMEDIATE-WRITE is non-nil, VARIABLE's data is written to disk
-immediately."
-  (set variable value)
-  (let ((delay (stash-write-delay variable)))
-    (if (and delay (not immediate-write))
-        (run-with-idle-timer delay nil #'stash-save variable)
-      (stash-save variable)))
-  (stash-get variable))
+(defvar stash-app-list nil
+  "\(\(APP STASH...))")
 
-(defmacro stash-setq (variable value &optional immediate-write)
-  `(stash-set ',variable ,value ,immediate-write))
+
+;;; Convenience Functions
 
-(defsubst stash-get (variable)
-  "Return VARIABLE's data."
-  (symbol-value variable))
+(defsubst stash-app-members (app)
+  (cdr (stash-app app)))
 
-(defun stash-save (variable)
-  "Write VARIABLE's data to disk."
-  (write-region
-   (let (print-length print-level)
-     (prin1-to-string (stash-get variable)))
-   nil
-   (stash-file variable))
-  (stash-get variable))
+(defsubst stash-app-timer (app)
+  (get app 'stash-timer))
+
+(defsubst stash-app-write-delay (app)
+  (get app 'stash-write-delay))
+
+(defsubst stash-app (app)
+  (assq app stash-app-list))
 
 (defsubst stash-file (variable)
   "Return VARIABLE's associated file.
@@ -90,8 +84,14 @@ The filename is expanded within the context of
 (defsubst stash-default-value (variable)
   (get variable 'stash-default-value))
 
-(defsubst stash-write-delay (variable)
-  (get variable 'stash-write-delay))
+(defsubst stash-app-members (app)
+  (cdr (stash-app app)))
+
+(defsubst stash-owning-app (variable)
+  (get variable 'stash-app))
+
+
+;;; Saving and Loading Variables
 
 (defun stash-read (file default)
   "Return the data in FILE.
@@ -112,51 +112,117 @@ if FILE was written by `stash-save'."
   "Read and set VARIABLE from disk.
 If the associated file does not exist, the value of VARIABLE is
 reset."
-  (stash-set
+  (set
    variable
    (stash-read
     (stash-file variable)
     (stash-default-value variable))))
 
+(defun stash-save (variable)
+  "Write VARIABLE's data to disk."
+  (let* ((cachefile (stash-file variable))
+         (dir (file-name-directory cachefile)))
+    (unless (file-exists-p dir)
+      (make-directory dir))
+    (write-region
+     (let (print-length print-level)
+       (prin1-to-string (symbol-value variable)))
+     nil
+     (stash-file variable)))
+  variable)
+
+(defun stash-set-and-save (variable value)
+  "Set VARIABLE to VALUE and write its group to disk immediately.
+Return VALUE."
+  (set variable value)
+  (stash-app-save (stash-owning-app variable))
+  value)
+
+(defun stash-app-save (app)
+  (mapc #'stash-save (cdr (assq app stash-app-list))))
+
 (defun stash-reset (variable)
   "Reset VARIABLE to its initial value."
-  (stash-set variable (stash-default-value variable)))
+  (set variable (stash-default-value variable)))
 
 
+;;; Defining Applications and Stashes
+
 ;;;###autoload
-(cl-defmacro defstash (symbol default-value docstring
-                              &key subdir filename (delay 5))
-  "Define SYMBOL as a stash variable and return SYMBOL.
-Similar to `defvar' except the variable is also saved to disk in
-a file inside `stash-directory' (the stash).  DEFAULT-VALUE is
-only used if the stash didn't already exist.  If it did, the
-variable's initial value is taken from there.
+(defalias 'defstash #'stash-new)
 
-In order to ensure the stash is up-to-date, the variable's value
-should be changed with `stash-set' or `stash-setq' instead of
-`set' or `setq'.
+;;;###autoload
+(defalias 'defapp #'stash-app-new)
 
-DOCSTRING is passed to `defvar'.
+;;;###autoload
+(defmacro stash-new (variable file &optional app default-value docstring)
+  "Define VARIABLE as a new stash to be written to FILE.
+VARIABLE's default value will be DEFAULT-VALUE.  When set, it
+will automatically be written to disk after Emacs is idle for
+WRITE-DELAY seconds."
+  (declare (indent 4) (doc-string 5))
+  (let ((g (assq app stash-app-list)))
+    (if (or g (null app))
+        (when (not (memq variable (cdr g)))
+          (setcdr g (cons variable (cdr g))))
+      (error "Stash application `%S' is not defined" app)))
+  `(prog1 (defvar ,variable ,default-value ,docstring)
+    (put ',variable 'stash-file ,file)
+    (put ',variable 'stash-default-value ,default-value)
+    (put ',variable 'stash-app ',app)
+    (set ',variable ,default-value)))
 
-In addition, this macro also takes the following keyword
-arguments:
-:subdir
-    a subdirectory, inside `stash-directory', in which to save
-    the stash.
-:filename
-    a name for the stash.  If this is absent, a sanitized version
-    of SYMBOL is used.
-:delay
-    the amount of idle time, in seconds, before the stash is
-    updated after the value has been changed (default 5)."
-  (declare (doc-string 3) (debug (name body)))
-  (let* ((actual-filename (or filename
-                              (url-hexify-string
-                               (symbol-name symbol))))
-         (file (expand-file-name actual-filename subdir)))
-    `(let ((value (stash-read ,file ,default-value)))
-       (defvar ,symbol value ,docstring)
-       (stash-new ',symbol ,file value ,delay))))
+;;;###autoload
+(defmacro stash-app-new (app write-delay)
+  (declare (debug (name body)))
+  `(prog1 ',app
+     (let ((this-app (assq ',app stash-app-list)))
+       (unless this-app
+         (let ((app-spec (list ',app)))
+           (add-to-list 'stash-app-list app-spec)
+           (setq this-app app-spec)))
+       (let ((app (car this-app)))
+         (put app 'stash-write-delay ,write-delay)
+         (put app 'stash-subdirectory (symbol-name ',app))
+         (stash-app-timer-reset ',app)))))
+
+;; If no application is given, save the stash every minute
+(stash-app-new nil 60)
+
+
+;;; Timers
+
+(defun stash-app-timer-cancel (app)
+  (let ((timer (stash-app-timer app)))
+    ;; star trek tgn s4e22 "half a life" :(
+    (when timer
+      (cancel-timer timer)))
+  app)
+
+(defun stash-app-timer-reset (app)
+  (stash-app-timer-cancel app)
+  (put app 'stash-timer
+       (run-with-idle-timer
+        (stash-app-write-delay app)
+        t #'stash-app-save app))
+  app)
+
+;;;###autoload
+(defun stash-timer-cancel-all ()
+  (interactive)
+  (mapcar
+   #'stash-app-timer-cancel
+   (mapcar #'car stash-app-list)))
+
+;;;###autoload
+(defun stash-timer-reset-all ()
+  (interactive)
+  (mapcar
+   #'stash-app-timer-reset
+   (mapcar #'car stash-app-list)))
+
+
+;;; Initialization
 
 (provide 'stash)
 ;;; stash.el ends here
