@@ -186,9 +186,6 @@ WRITE-DELAY seconds."
          (put app 'stash-subdirectory (symbol-name ',app))
          (stash-app-timer-reset ',app)))))
 
-;; If no application is given, save the stash every minute
-(stash-app-new nil 60)
-
 
 ;;; Timers
 
@@ -223,6 +220,9 @@ WRITE-DELAY seconds."
 
 
 ;;; Initialization
+
+;; If no application is given, save the stash every minute
+(stash-app-new nil 60)
 
 (provide 'stash)
 ;;; stash.el ends here
