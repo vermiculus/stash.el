@@ -30,8 +30,8 @@
 
 ;; The basic unit of stash.el is the app.  Apps define groups of
 ;; related variables.  At an interval defined by each application, its
-;; variables are written to disk.  Where no app is given, the `nil'
-;; app is set to save every minute.
+;; variables are written to disk.  Where no app is given, the
+;; `stash-default-application' is used, set to save every minute.
 
 ;;; Code:
 (eval-when-compile
@@ -161,16 +161,17 @@ VARIABLE's default value will be DEFAULT-VALUE.  When set, it
 will automatically be written to disk after Emacs is idle for
 WRITE-DELAY seconds."
   (declare (indent 4) (doc-string 5))
-  (let ((g (assq app stash-app-list)))
-    (if (or g (null app))
-        (when (not (memq variable (cdr g)))
-          (setcdr g (cons variable (cdr g))))
-      (error "Stash application `%S' is not defined" app)))
-  `(prog1 (defvar ,variable ,default-value ,docstring)
-    (put ',variable 'stash-file ,file)
-    (put ',variable 'stash-default-value ,default-value)
-    (put ',variable 'stash-app ',app)
-    (set ',variable ,default-value)))
+  (let ((app (or app 'stash-default-application)))
+    (let ((g (assq app stash-app-list)))
+      (if (or g (eq g 'stash-default-application))
+          (when (not (memq variable (cdr g)))
+            (setcdr g (cons variable (cdr g))))
+        (error "Stash application `%S' is not defined" app)))
+    `(prog1 (defvar ,variable ,default-value ,docstring)
+       (put ',variable 'stash-file ,file)
+       (put ',variable 'stash-default-value ,default-value)
+       (put ',variable 'stash-app ',app)
+       (set ',variable ,default-value))))
 
 ;;;###autoload
 (defmacro stash-app-new (app write-delay)
@@ -223,7 +224,7 @@ WRITE-DELAY seconds."
 ;;; Initialization
 
 ;; If no application is given, save the stash every minute
-(stash-app-new nil 60)
+(stash-app-new stash-default-application 60)
 
 (provide 'stash)
 ;;; stash.el ends here
