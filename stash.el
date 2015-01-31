@@ -175,16 +175,17 @@ WRITE-DELAY seconds."
 ;;;###autoload
 (defmacro stash-app-new (app write-delay)
   (declare (debug (name body)))
-  `(prog1 ',app
-     (let ((this-app (assq ',app stash-app-list)))
-       (unless this-app
-         (let ((app-spec (list ',app)))
-           (add-to-list 'stash-app-list app-spec)
-           (setq this-app app-spec)))
-       (let ((app (car this-app)))
-         (put app 'stash-write-delay ,write-delay)
-         (put app 'stash-subdirectory (symbol-name ',app))
-         (stash-app-timer-reset ',app)))))
+  (let ((app (if (null app) nil `',app)))
+    `(prog1 ,app
+       (let ((this-app (assq ,app stash-app-list)))
+         (unless this-app
+           (let ((app-spec (list ,app)))
+             (add-to-list 'stash-app-list app-spec)
+             (setq this-app app-spec)))
+         (let ((app (car this-app)))
+           (put app 'stash-write-delay ,write-delay)
+           (put app 'stash-subdirectory (symbol-name ,app))
+           (stash-app-timer-reset ,app))))))
 
 
 ;;; Timers
