@@ -122,16 +122,17 @@ if FILE was written by `stash-save'."
         (read (current-buffer)))
     default))
 
-(defun stash-load (variable)
+(defun stash-load (variable &optional default-value)
   "Read and set VARIABLE from disk.
 If the associated file does not exist, the value of VARIABLE is
 reset."
-  (when (file-readable-p (stash-file variable))
-    (set
-     variable
-     (stash-read
-      (stash-file variable)
-      (stash-default-value variable)))))
+  (set
+   variable
+   (if (file-readable-p (stash-file variable))
+       (stash-read
+        (stash-file variable)
+        (stash-default-value variable))
+     default-value)))
 
 (defun stash-save (variable)
   "Write VARIABLE's data to disk."
