@@ -139,7 +139,8 @@ Return VALUE."
   value)
 
 (defun stash-app-save (app)
-  (mapc #'stash-save (cdr (assq app stash-app-list))))
+  (prog1 (mapc #'stash-save (cdr (assq app stash-app-list)))
+    (message "Saved `%S' stashes" app)))
 
 (defun stash-reset (variable)
   "Reset VARIABLE to its initial value."
