@@ -163,6 +163,8 @@ VARIABLE's default value will be DEFAULT-VALUE.  When set, it
 will automatically be written to disk after Emacs is idle for
 WRITE-DELAY seconds."
   (declare (indent 4) (doc-string 5))
+  (unless file
+    (error "Must declare a file"))
   (let ((app (or app 'stash-default-application)))
     (let ((g (assq app stash-app-list)))
       (if (or g (eq g 'stash-default-application))
