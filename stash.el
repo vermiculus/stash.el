@@ -79,7 +79,10 @@ The filename is expanded within the context of
 `stash-directory'."
   (expand-file-name
    (get variable 'stash-file)
-   stash-directory))
+   (expand-file-name
+    (get (get variable 'stash-app)
+         'stash-subdirectory)
+    stash-directory)))
 
 (defsubst stash-default-value (variable)
   (get variable 'stash-default-value))
