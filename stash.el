@@ -141,7 +141,11 @@ Return VALUE."
 
 (defun stash-app-save (app)
   (prog1 (mapc #'stash-save (cdr (assq app stash-app-list)))
-    (message "Saved `%S' stashes" app)))
+    (message "Saved `%S' application data" app)))
+
+(defun stash-save-all ()
+  (mapc #'stash-app-save (mapcar #'car stash-app-list))
+  (message "Saved all application data"))
 
 (defun stash-reset (variable)
   "Reset VARIABLE to its initial value."
@@ -229,6 +233,7 @@ WRITE-DELAY seconds."
 
 ;; If no application is given, save the stash every minute
 (stash-app-new stash-default-application 60)
+(add-hook 'kill-emacs-hook #'stash-save-all)
 
 (provide 'stash)
 ;;; stash.el ends here
