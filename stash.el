@@ -137,8 +137,7 @@ reset."
   "Write VARIABLE's data to disk."
   (let* ((cachefile (stash-file variable))
          (dir (file-name-directory cachefile)))
-    (unless (file-exists-p dir)
-      (make-directory dir))
+    (make-directory dir t)
     (write-region
      (let (print-length print-level)
        (prin1-to-string (symbol-value variable)))
