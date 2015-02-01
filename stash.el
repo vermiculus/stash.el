@@ -4,7 +4,7 @@
 
 ;; Author: Sean Allred <code@seanallred.com>
 ;; URL: https://www.github.com/vermiculus/stash.el/
-;; Version: 0.3
+;; Version: 0.3.2
 ;; Keywords: extensions, data, internal, lisp
 
 ;; This program is free software; you can redistribute it and/or modify
