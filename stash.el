@@ -4,7 +4,7 @@
 
 ;; Author: Sean Allred <code@seanallred.com>
 ;; URL: https://www.github.com/vermiculus/stash.el/
-;; Version: 0.3.2
+;; Version: 0.4
 ;; Keywords: extensions, data, internal, lisp
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -171,7 +171,7 @@ Return VALUE."
 (defalias 'defstash #'stash-new)
 
 ;;;###autoload
-(defalias 'defapp #'stash-app-new)
+(defalias 'defstashapp #'stash-app-new)
 
 ;;;###autoload
 (defmacro stash-new (variable file &optional app default-value docstring)
