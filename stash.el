@@ -6,7 +6,6 @@
 ;; URL: https://www.github.com/vermiculus/stash.el/
 ;; Version: 0.3
 ;; Keywords: extensions, data, internal, lisp
-;; Package-Requires: ((cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -34,8 +33,6 @@
 ;; `stash-default-application' is used, set to save every minute.
 
 ;;; Code:
-(eval-when-compile
-  (require 'cl-lib))
 
 
 ;;; User Customizations
