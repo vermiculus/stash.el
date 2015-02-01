@@ -177,23 +177,31 @@ Return VALUE."
 ;;;###autoload
 (defmacro stash-new (variable file &optional app default-value docstring)
   "Define VARIABLE as a new stash to be written to FILE.
-VARIABLE's default value will be DEFAULT-VALUE.  When set, it
-will automatically be written to disk after Emacs is idle for
-WRITE-DELAY seconds."
+VARIABLE's default value will be DEFAULT-VALUE.  If DEFAULT-VALUE
+is of the form
+
+  \(or stashed DEFAULT)
+
+the variable will be loaded from disk.  If the variable's
+associated file doesn't exist, the value will be DEFAULT.  Note
+it must be this form, so be sure to quote it appropriately."
   (declare (indent 4) (doc-string 5))
   (unless file
     (error "Must declare a file"))
-  (let ((app (or app 'stash-default-application)))
-    (let ((g (assq app stash-app-list)))
-      (if (or g (eq g 'stash-default-application))
-          (when (not (memq variable (cdr g)))
-            (setcdr g (cons variable (cdr g))))
-        (error "Stash application `%S' is not defined" app)))
-    `(prog1 (defvar ,variable ,default-value ,docstring)
+  (let* ((do-load (and (equal '(or stashed) (butlast default-value))))
+         (dv (or (and do-load (nth 2 default-value)) default-value))
+         (app (or app 'stash-default-application))
+         (g (assq app stash-app-list)))
+    (if (or g (eq g 'stash-default-application))
+        (unless (memq variable (cdr g))
+          (setcdr g (cons variable (cdr g))))
+      (error "Stash application `%S' is not defined" app))
+    `(prog1 (defvar ,variable ,dv ,docstring)
        (put ',variable 'stash-file ,file)
-       (put ',variable 'stash-default-value ,default-value)
+       (put ',variable 'stash-default-value ,dv)
        (put ',variable 'stash-app ',app)
-       (set ',variable ,default-value))))
+       ,(when do-load
+          `(stash-load ',variable ,dv)))))
 
 ;;;###autoload
 (defmacro stash-app-new (app write-delay)

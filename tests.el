@@ -31,6 +31,22 @@
    (should
     (null tmp))))
 
+(ert-deftest simple-with-load-default ()
+  (with-clean-cache
+   (should
+    (equal "stash test"
+           (symbol-value
+            (stash-new tmp "tmp.el" test-app
+                       (or stashed "stash test")))))
+   (ert-run-idle-timers)
+   (should
+    (equal "stash test"
+           (stash-load 'tmp)))
+   (setq tmp nil)
+   (ert-run-idle-timers)
+   (should (null (stash-load 'tmp)))
+   (should (null tmp))))
+
 (ert-deftest simple-with-idle-timer ()
   (with-clean-cache
 
