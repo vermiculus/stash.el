@@ -98,9 +98,6 @@ The filename is expanded within the context of
 (defsubst stash-default-value (variable)
   (get variable 'stash-default-value))
 
-(defsubst stash-app-members (app)
-  (cdr (stash-app app)))
-
 (defsubst stash-owning-app (variable)
   (get variable 'stash-app))
 
